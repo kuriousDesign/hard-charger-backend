@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 import pandas as pd
 
 # Replace with the actual gid of your target tab
@@ -10,13 +10,14 @@ csv_url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&
 
 
 app = Flask(__name__)
-@app.route('/', methods=['GET'])
+@app.route('/api/entryresults', methods=['GET'])
 def home():
-    # read and store rows of data from the tab called "entry data" in the google sheet to an array and return it as a json response
-    df = pd.read_csv(csv_url)
-    df.to_csv('entry_results.csv', index=False)
-    entry_results = df.to_dict(orient='records')
-    return {'entry_results': entry_results}
+    try:
+        df = pd.read_csv(csv_url)
+        entry_results = df.to_dict(orient='records')
+        return jsonify({'entry_results': entry_results})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
     
 if __name__ == '__main__':
