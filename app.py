@@ -10,6 +10,12 @@ csv_url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&
 
 
 app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return "<h1>Welcome to the Entry Results API!</h1><p>Use the endpoint <code>/api/entryresults</code> to get the entry results.</p>"
+
+
 @app.route('/api/entryresults', methods=['GET'])
 def home():
     try:
