@@ -1,15 +1,18 @@
 from flask import Flask, jsonify
+import threading
 import pandas as pd
+import time
 
 # Replace with the actual gid of your target tab
 sheet_gid = '151132530'
 sheet_id = '1fnTW9bKVbEuNUCFcXIecflkyrKgiKVABAasd9Z98BiI'
-
 google_sheet_url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={sheet_gid}'
 
 google_form_url = 'https://docs.google.com/forms/d/e/1FAIpQLScGJ_XcP0bFe481GweWjf9k55SSGLVwWSoXP4PxKiJlFKGkhQ/viewform?usp=header'
 
 app = Flask(__name__)
+
+entry_results = []  # Global variable to store entry results
 
 @app.route('/')
 def index():
@@ -25,8 +28,6 @@ def index():
 def entries():
     # get all active entries (rows) and display just the email addresses using html <h2> tags 
     try:
-        df = pd.read_csv(google_sheet_url)
-        entry_results = df.to_dict(orient='records')
         emails = [f"<h2>{entry['Email Address']}</h2>" for entry in entry_results if 'Email Address' in entry]
         return ''.join(emails)
 
@@ -36,12 +37,24 @@ def entries():
 @app.route('/api/entryresults', methods=['GET'])
 def home():
     try:
-        df = pd.read_csv(google_sheet_url)
-        entry_results = df.to_dict(orient='records')
         return jsonify({'entry_results': entry_results})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
+def update_entry_results():
+    global entry_results
+    while True:
+        try:
+            df = pd.read_csv(google_sheet_url)
+            entry_results = df.to_dict(orient='records')
+        except Exception as e:
+            print(f"[ERROR] Failed to fetch sheet: {e}")
+        time.sleep(1)  # wait 1 second
+
     
 if __name__ == '__main__':
+    # Start polling thread
+    updating_thread = threading.Thread(target=update_entry_results, daemon=True)
+    updating_thread.start()
     app.run()# The above code initializes a Flask web application and defines a single route that returns a simple greeting message.
