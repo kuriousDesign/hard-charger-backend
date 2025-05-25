@@ -24,7 +24,7 @@ def index():
     <p>Click <a href="/drivers">here</a> to view all drivers.</p>
     """
 
-@app.route('/drivers')
+@app.route('/api/drivers')
 def serve_drivers():
     # get list of drivers from drivers collection
     # get all documents in drivers collection
@@ -32,7 +32,7 @@ def serve_drivers():
     # Convert cursor to list of driver names
     driver_names = [driver['first_name'] + ' ' + driver['last_name'] + ' ' + driver['suffix'] + ' - ' + driver["car_number"] for driver in drivers]
     
-    return jsonify({drivers: driver_names})
+    return jsonify({'drivers': driver_names})
 
 @app.route('/races')
 def serve_races():
