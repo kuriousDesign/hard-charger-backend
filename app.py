@@ -35,6 +35,7 @@ def index():
 
 @app.route('/entries', methods=['GET'])
 def entries():
+    global entry_results
     # get all active entries (rows) and display just the email addresses using html <h2> tags 
     try:
         emails = [f"<h2>email address: {entry['Email Address']} --> score: {entry['Total']}</h2>" for entry in entry_results if 'Email Address' in entry]
@@ -44,7 +45,8 @@ def entries():
         return str(e), 500
 
 @app.route('/api/entryresults', methods=['GET'])
-def home():
+def get_entry_results():
+    global entry_results
     try:
         return jsonify({'entry_results': entry_results})
     except Exception as e:
@@ -52,7 +54,7 @@ def home():
 
 
 @app.route('/api/raceresults', methods=['GET'])
-def provide_race_results():
+def get_race_results():
     return jsonify(race_results)
 
 
@@ -87,3 +89,4 @@ if __name__ == '__main__':
     scheduler.init_app(app)
     scheduler.start()
     app.run()# The above code initializes a Flask web application and defines a single route that returns a simple greeting message.
+    print("Starting Flask app...")
