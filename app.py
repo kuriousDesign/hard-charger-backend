@@ -1,7 +1,9 @@
 from flask import Flask, jsonify
-from flask_apscheduler import APScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 import pandas as pd
 import time
+import logging
+logging.basicConfig(level=logging.INFO)
 
 # Replace with the actual gid of your target tab
 gid_entry_results = '151132530'
@@ -55,15 +57,18 @@ def get_entry_results():
 
 @app.route('/api/raceresults', methods=['GET'])
 def get_race_results():
+    global race_results
+    if race_results is None:
+        update_race_results()
     return jsonify(race_results)
 
 
-def get_race_results():
+def update_race_results():
     global race_results
     try:
         df_finish = pd.read_csv(tab_url(gid_a_finish))
         df_starting = pd.read_csv(tab_url(gid_a_starting))
-        results = df_finish.to_dict(orient='records')
+        race_results = df_finish.to_dict(orient='records')
         # Filter out rows where
     except Exception as e:
         print(f"[ERROR] Failed to fetch sheet: {e}")
@@ -81,12 +86,15 @@ def update_entry_results():
         print(f"[ERROR] Failed to fetch sheet: {e}")
 
 
-scheduler = APScheduler()
+scheduler = BackgroundScheduler()
 
 if __name__ == '__main__':
-    #update_entry_results()  # Optional: pre-fill data before first request
-    scheduler.add_job(id='UpdateEntryResults', func=update_entry_results, trigger='interval', seconds=15)
-    scheduler.init_app(app)
+    logging.info("Starting entry result scheduler...")
+    update_entry_results()  # Optional: preload on startup
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(update_entry_results, 'interval', seconds=15, id='update_entries')
     scheduler.start()
+    
+    logging.info("Starting Flask app...")
     app.run()# The above code initializes a Flask web application and defines a single route that returns a simple greeting message.
     print("Starting Flask app...")
