@@ -31,8 +31,11 @@ def serve_drivers():
     drivers = db.drivers.find({}, {'_id': 0})
     # Convert cursor to list of driver names
     driver_names = [driver['first_name'] + ' ' + driver['last_name'] + ' ' + driver['suffix'] + ' - ' + driver["car_number"] for driver in drivers]
+
+    # convert cursor to list of driver dictionaries
+    drivers = list(db.drivers.find({}, {'_id': 0, 'first_name': 1, 'last_name': 1, 'suffix': 1, 'car_number': 1}))
     
-    return jsonify({'drivers': driver_names})
+    return jsonify({'drivers': list(drivers)})
 
 @app.route('/races')
 def serve_races():
