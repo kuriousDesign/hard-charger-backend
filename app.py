@@ -32,7 +32,7 @@ def serve_drivers():
     # Convert cursor to list of driver names
     driver_names = [driver['first_name'] + ' ' + driver['last_name'] + ' ' + driver['suffix'] + ' - ' + driver["car_number"] for driver in drivers]
     
-    return jsonify(driver_names)
+    return jsonify({drivers: driver_names})
 
 @app.route('/races')
 def serve_races():
