@@ -1,4 +1,5 @@
 from flask import Flask, jsonify
+from flask_cors import CORS
 from apscheduler.schedulers.background import BackgroundScheduler
 import pandas as pd
 import time
@@ -21,6 +22,7 @@ def tab_url(gid):
 google_form_url = 'https://docs.google.com/forms/d/e/1FAIpQLScGJ_XcP0bFe481GweWjf9k55SSGLVwWSoXP4PxKiJlFKGkhQ/viewform?usp=header'
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 entry_results = []  # Global variable to store entry results
 race_results = []
@@ -96,5 +98,5 @@ if __name__ == '__main__':
     scheduler.start()
     
     logging.info("Starting Flask app...")
-    app.run()# The above code initializes a Flask web application and defines a single route that returns a simple greeting message.
+    app.run(debug=True,port=8080)# The above code initializes a Flask web application and defines a single route that returns a simple greeting message.
     print("Starting Flask app...")
