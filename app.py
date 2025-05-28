@@ -187,6 +187,11 @@ def create_or_update_race():
         # Create new race
         if '_id' in race_data:
             del race_data['_id']
+        if 'event_id' in race_data:
+            if type(race_data['event_id']) is str:
+                object_id = ObjectId(race_data['event_id'])
+                race_data['event_id'] = object_id
+                
         result = db.races.insert_one(race_data)
         return jsonify({'message': 'Race created successfully', 'id': str(result.inserted_id)})
 
