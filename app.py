@@ -123,7 +123,7 @@ def create_or_update_game():
 
 @app.route('/api/races/<string:race_id>')
 def serve_race(race_id: str):
-    doc = db.events.find_one({'_id': ObjectId(race_id)})
+    doc = db.races.find_one({'_id': ObjectId(race_id)})
     if doc is None:
         return jsonify({'error': 'Race not found'}), 404
     return jsonify({'data': serialize_doc(doc)})
