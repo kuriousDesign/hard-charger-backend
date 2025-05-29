@@ -128,19 +128,39 @@ def serve_race(race_id: str):
         return jsonify({'error': 'Race not found'}), 404
     return jsonify({'data': serialize_doc(doc)})
 
-@app.route('/api/racers/<string:game_id>')
-def serve_racers_of_game(game_id: str):
+@app.route('/api/racers/<string:race_id>')
+def serve_racers_of_race(race_id: str):
+    doc = db.racers.find({'race_id': ObjectId(race_id)})
+    prepped_racers = []
+    for racer in doc:
+        prepped_racers.append(serialize_doc(racer))
 
-    game_doc = db.games.find_one({'_id': ObjectId(game_id)})
-    if game_doc is None:
-        return jsonify({'error': f'Game ${game_id} not found'}), 404
+    return jsonify({'data': prepped_racers})
     
-    racers = game_doc.get('racers', [])
-    if not racers:
-        racers = []
 
-    return jsonify({'data': racers})
-    
+@app.route('/api/racers-with-drivers/<string:race_id>')
+def serve_racers_with_drivers_of_race(race_id: str):
+    if 'racers' not in db.list_collection_names():
+        return jsonify({'error': 'Racers collection not found'}), 404
+    doc_racers = db.racers.find()#({'race_id': ObjectId(race_id)})
+    if doc_racers.retrieved > 0 or True:
+        doc_drivers = []
+        prepped_racers = []
+        for racer in doc_racers:
+            driver = None
+            driver = db.drivers.find_one({'_id': racer['driver_id']})
+            if driver is None:
+                logging.warning(f"Driver with ID {racer['driver_id']} not found for racer {racer['_id']}")
+                return jsonify({'error': f'Driver with ID {racer["driver_id"]} not found'}), 404
+            
+            prepped_racers.append(serialize_doc(racer))
+            doc_drivers.append(serialize_doc(driver))
+    else:
+        return jsonify({'racers':[],'drivers': []})
+    prepped_drivers = doc_drivers
+    return jsonify({'racers':prepped_racers,'drivers': prepped_drivers})
+
+
 
 @app.route('/api/races')
 def serve_races():
@@ -195,6 +215,33 @@ def create_or_update_race():
         result = db.races.insert_one(race_data)
         return jsonify({'message': 'Race created successfully', 'id': str(result.inserted_id)})
 
+@app.route('/api/create_racer', methods=['POST'])
+def create_or_update_racer():
+    racer_data = request.get_json()
+    
+    if racer_data.get('_id') and racer_data['_id'] != '':
+        # Update existing racer
+        racer_id = ObjectId(racer_data['_id'])
+        del racer_data['_id']
+        result = db.racers.update_one(
+            {'_id': racer_id},
+            {'$set': racer_data}
+        )
+        if result.matched_count == 0:
+            return jsonify({'error': 'Racer not found'}), 404
+        return jsonify({'message': 'Racer updated successfully'})
+    else:
+        # Create new racer
+        if '_id' in racer_data:
+            del racer_data['_id']
+        if 'driver_id' in racer_data:
+            racer_data['driver_id'] = ObjectId(racer_data['driver_id']) 
+        if 'race_id' in racer_data:
+            racer_data['race_id'] = ObjectId(racer_data['race_id']) 
+        else: 
+            return jsonify({'error': 'Driver not found'}), 404
+        result = db.racers.insert_one(racer_data)
+        return jsonify({'message': 'Racer created successfully', 'id': str(result.inserted_id)})
 
 @app.route('/api/drivers')
 def serve_drivers():
