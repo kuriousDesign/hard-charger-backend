@@ -142,7 +142,7 @@ def serve_racers_of_race(race_id: str):
 def serve_racers_with_drivers_of_race(race_id: str):
     if 'racers' not in db.list_collection_names():
         return jsonify({'error': 'Racers collection not found'}), 404
-    doc_racers = db.racers.find()#({'race_id': ObjectId(race_id)})
+    doc_racers = db.racers.find({'race_id': ObjectId(race_id)})
     if doc_racers.retrieved > 0 or True:
         doc_drivers = []
         prepped_racers = []
@@ -254,22 +254,26 @@ def create_or_update_driver():
     driver_data = request.get_json()
     
     if driver_data.get('_id'):
-        # Update existing driver
-        driver_id = ObjectId(driver_data['_id'])
-        del driver_data['_id']
-        result = db.drivers.update_one(
-            {'_id': driver_id},
-            {'$set': driver_data}
-        )
-        if result.matched_count == 0:
-            return jsonify({'error': 'Driver not found'}), 404
-        return jsonify({'message': 'Driver updated successfully'})
+        if '_id' in driver_data['_id']=='':
+            del driver_data['_id']
+            result = db.drivers.insert_one(driver_data)
+            return jsonify({'message': 'Driver created successfully', 'id': str(result.inserted_id)})
+        else:
+            # Update existing driver
+            driver_data['_id'] = ObjectId(driver_data['_id'])
+            result = db.drivers.update_one(
+                {'_id': driver_data['_id']},
+                {'$set': driver_data}
+            )
+            if result.matched_count == 0:
+                return jsonify({'error': 'Driver not found'}), 404
+            
+            return jsonify({'message': 'Driver updated successfully'})
     else:
         # Create new driver
-        if '_id' in driver_data:
-            del driver_data['_id']
         result = db.drivers.insert_one(driver_data)
         return jsonify({'message': 'Driver created successfully', 'id': str(result.inserted_id)})
+        
 
 if __name__ == '__main__':
     logging.info("Starting entry result scheduler...")
